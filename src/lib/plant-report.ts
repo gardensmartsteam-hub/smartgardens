@@ -7,6 +7,13 @@ const GREEN: [number, number, number] = [47, 107, 63];
 const CLAY: [number, number, number] = [201, 111, 74];
 const MUTED: [number, number, number] = [120, 124, 112];
 
+const METRIC_LABEL: Record<string, string> = {
+  humidity: "Umidade",
+  light: "Luminosidade",
+  temperature: "Temperatura",
+  nutrients: "Nutrientes",
+};
+
 const fmt = (n: number) => (Math.round(n * 10) / 10).toString().replace(".", ",");
 
 function stats(values: number[]) {
@@ -117,7 +124,7 @@ export function buildPlantReport(input: {
       head: [["Quando", "Métrica", "Severidade", "Mensagem"]],
       body: alerts.map((a) => [
         new Date(a.created_at).toLocaleString("pt-BR"),
-        a.metric,
+        METRIC_LABEL[a.metric] ?? a.metric,
         a.severity,
         a.message,
       ]),
@@ -132,10 +139,13 @@ export function buildPlantReport(input: {
   }
 
   // Recomendações
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.5);
   const body = doc.splitTextToSize(
     recommendation.trim() || "Sem recomendações disponíveis no momento.",
     pageWidth - margin * 2 - 24,
   ) as string[];
+  doc.setFontSize(9);
   const tipLines = doc.splitTextToSize(
     `Dica da espécie: ${plant.species.care_tip}`,
     pageWidth - margin * 2 - 24,
