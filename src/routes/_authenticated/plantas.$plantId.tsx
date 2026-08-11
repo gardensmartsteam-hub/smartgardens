@@ -12,9 +12,19 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowLeft, Send, Sprout } from "lucide-react";
+import { ArrowLeft, FileDown, Send, Sprout } from "lucide-react";
 import { toast } from "sonner";
-import { fetchPlants, fetchReadings, range, statusOf, type MetricKey } from "@/lib/garden";
+import {
+  fetchAlerts,
+  fetchPlants,
+  fetchReadings,
+  range,
+  statusOf,
+  type MetricKey,
+  type Plant,
+  type Reading,
+} from "@/lib/garden";
+import { buildPlantReport, slugify } from "@/lib/plant-report";
 import { askGardener } from "@/lib/gardener.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +64,7 @@ function PlantPage() {
     queryKey: ["readings", plantId],
     queryFn: () => fetchReadings(plantId),
   });
+  const alerts = useQuery({ queryKey: ["alerts"], queryFn: fetchAlerts });
 
   const plant = plants.data?.find((p) => p.id === plantId);
   const data = useMemo(
@@ -82,6 +93,20 @@ function PlantPage() {
   }
 
   const last = readings.data?.[readings.data.length - 1];
+  const context: PlantContext | null = last
+    ? {
+        name: plant.name,
+        species: plant.species.common_name,
+        humidity: last.humidity,
+        light: last.light,
+        temperature: last.temperature,
+        nutrients: last.nutrients,
+        idealHumidity: `${plant.species.humidity_min}–${plant.species.humidity_max}%`,
+        idealLight: `${plant.species.light_min}–${plant.species.light_max}%`,
+        idealTemperature: `${plant.species.temp_min}–${plant.species.temp_max}°C`,
+        idealNutrients: `${plant.species.nutrients_min}–${plant.species.nutrients_max}%`,
+      }
+    : null;
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
@@ -92,16 +117,26 @@ function PlantPage() {
         <ArrowLeft className="h-4 w-4" /> Voltar ao painel
       </Link>
 
-      <header className="mt-6">
-        <h1 className="text-3xl">{plant.name}</h1>
-        <p className="text-muted-foreground text-sm italic">
-          {plant.species.common_name} · {plant.species.scientific_name} · {plant.location}
-        </p>
+      <header className="mt-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl">{plant.name}</h1>
+          <p className="text-muted-foreground text-sm italic">
+            {plant.species.common_name} · {plant.species.scientific_name} · {plant.location}
+          </p>
+        </div>
+        <ReportButton
+          plant={plant}
+          readings={readings.data ?? []}
+          alerts={(alerts.data ?? []).filter((a) => a.plant_id === plant.id)}
+          context={context}
+        />
+      </header>
+      <div>
         <p className="bg-secondary text-secondary-foreground mt-4 rounded-lg p-4 text-sm">
           <Sprout className="mr-2 inline h-4 w-4 text-primary" />
           {plant.species.care_tip}
         </p>
-      </header>
+      </div>
 
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
         {CHART_METRICS.map((m) => {
@@ -168,46 +203,84 @@ function PlantPage() {
         })}
       </section>
 
-      <Jardineiro
-        context={
-          last
-            ? {
-                name: plant.name,
-                species: plant.species.common_name,
-                humidity: last.humidity,
-                light: last.light,
-                temperature: last.temperature,
-                nutrients: last.nutrients,
-                idealHumidity: `${plant.species.humidity_min}–${plant.species.humidity_max}%`,
-                idealLight: `${plant.species.light_min}–${plant.species.light_max}%`,
-                idealTemperature: `${plant.species.temp_min}–${plant.species.temp_max}°C`,
-                idealNutrients: `${plant.species.nutrients_min}–${plant.species.nutrients_max}%`,
-              }
-            : null
-        }
-      />
+      <Jardineiro context={context} />
     </main>
   );
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-function Jardineiro({
+type PlantContext = {
+  name: string;
+  species: string;
+  humidity: number;
+  light: number;
+  temperature: number;
+  nutrients: number;
+  idealHumidity: string;
+  idealLight: string;
+  idealTemperature: string;
+  idealNutrients: string;
+};
+
+function ReportButton({
+  plant,
+  readings,
+  alerts,
   context,
 }: {
-  context: {
-    name: string;
-    species: string;
-    humidity: number;
-    light: number;
-    temperature: number;
-    nutrients: number;
-    idealHumidity: string;
-    idealLight: string;
-    idealTemperature: string;
-    idealNutrients: string;
-  } | null;
+  plant: Plant;
+  readings: Reading[];
+  alerts: { id: string; plant_id: string; metric: string; severity: string; message: string; created_at: string; resolved: boolean }[];
+  context: PlantContext | null;
 }) {
+  const ask = useServerFn(askGardener);
+  const [loading, setLoading] = useState(false);
+
+  async function download() {
+    if (loading || readings.length === 0) return;
+    setLoading(true);
+    const toastId = toast.loading("Montando o relatório em PDF…");
+    let recommendation =
+      "O jardineiro virtual não respondeu a tempo. Compare as leituras com as faixas ideais da tabela acima.";
+    try {
+      const res = await ask({
+        data: {
+          messages: [
+            {
+              role: "user",
+              content:
+                "Escreva um resumo de recomendações de cuidado para esta planta, com base nas leituras atuais e nas faixas ideais. Use no máximo 3 parágrafos curtos, em texto corrido, sem markdown.",
+            },
+          ],
+          plantContext: context,
+        },
+      });
+      recommendation = res.reply;
+    } catch {
+      // mantém o texto de fallback no PDF
+    }
+
+    try {
+      const doc = buildPlantReport({ plant, readings, alerts, recommendation });
+      doc.save(`smart-garden-${slugify(plant.name)}.pdf`);
+      toast.success("Relatório baixado.", { id: toastId });
+    } catch {
+      toast.error("Não consegui gerar o PDF agora.", { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Button onClick={download} disabled={loading || readings.length === 0} variant="outline">
+      <FileDown className="mr-2 h-4 w-4" />
+      {loading ? "Gerando PDF…" : "Baixar relatório PDF"}
+    </Button>
+  );
+}
+
+function Jardineiro({ context }: { context: PlantContext | null }) {
   const ask = useServerFn(askGardener);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
