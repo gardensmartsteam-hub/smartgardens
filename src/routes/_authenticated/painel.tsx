@@ -109,11 +109,17 @@ function Painel() {
           Smart Garden
         </span>
         <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/dispositivos">
+              <Cpu className="mr-1 h-4 w-4" /> Dispositivos
+            </Link>
+          </Button>
           <NovaPlanta onDone={refresh} />
           <Button variant="ghost" size="icon" onClick={sair} aria-label="Sair">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
+
       </header>
 
       {alerts.data && alerts.data.length > 0 && (

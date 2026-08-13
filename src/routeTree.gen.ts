@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedDispositivosRouteImport } from './routes/_authenticated/dispositivos'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedPlantasPlantIdRouteImport } from './routes/_authenticated/plantas.$plantId'
 import { Route as ApiPublicIngestRouteImport } from './routes/api/public/ingest'
@@ -30,6 +31,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedDispositivosRoute =
+  AuthenticatedDispositivosRouteImport.update({
+    id: '/dispositivos',
+    path: '/dispositivos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
@@ -50,6 +57,7 @@ const ApiPublicIngestRoute = ApiPublicIngestRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dispositivos': typeof AuthenticatedDispositivosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/plantas/$plantId': typeof AuthenticatedPlantasPlantIdRoute
   '/api/public/ingest': typeof ApiPublicIngestRoute
@@ -57,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dispositivos': typeof AuthenticatedDispositivosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/plantas/$plantId': typeof AuthenticatedPlantasPlantIdRoute
   '/api/public/ingest': typeof ApiPublicIngestRoute
@@ -66,6 +75,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/dispositivos': typeof AuthenticatedDispositivosRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/plantas/$plantId': typeof AuthenticatedPlantasPlantIdRoute
   '/api/public/ingest': typeof ApiPublicIngestRoute
@@ -73,14 +83,26 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/painel' | '/plantas/$plantId' | '/api/public/ingest'
+    | '/'
+    | '/auth'
+    | '/dispositivos'
+    | '/painel'
+    | '/plantas/$plantId'
+    | '/api/public/ingest'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/painel' | '/plantas/$plantId' | '/api/public/ingest'
+  to:
+    | '/'
+    | '/auth'
+    | '/dispositivos'
+    | '/painel'
+    | '/plantas/$plantId'
+    | '/api/public/ingest'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/dispositivos'
     | '/_authenticated/painel'
     | '/_authenticated/plantas/$plantId'
     | '/api/public/ingest'
@@ -116,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/dispositivos': {
+      id: '/_authenticated/dispositivos'
+      path: '/dispositivos'
+      fullPath: '/dispositivos'
+      preLoaderRoute: typeof AuthenticatedDispositivosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -141,11 +170,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDispositivosRoute: typeof AuthenticatedDispositivosRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedPlantasPlantIdRoute: typeof AuthenticatedPlantasPlantIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDispositivosRoute: AuthenticatedDispositivosRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedPlantasPlantIdRoute: AuthenticatedPlantasPlantIdRoute,
 }
