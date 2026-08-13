@@ -55,6 +55,53 @@ export type Database = {
           },
         ]
       }
+      devices: {
+        Row: {
+          battery: number | null
+          created_at: string
+          device_id: string
+          device_key: string
+          dry_raw: number
+          id: string
+          last_seen_at: string | null
+          plant_id: string | null
+          user_id: string
+          wet_raw: number
+        }
+        Insert: {
+          battery?: number | null
+          created_at?: string
+          device_id: string
+          device_key?: string
+          dry_raw?: number
+          id?: string
+          last_seen_at?: string | null
+          plant_id?: string | null
+          user_id: string
+          wet_raw?: number
+        }
+        Update: {
+          battery?: number | null
+          created_at?: string
+          device_id?: string
+          device_key?: string
+          dry_raw?: number
+          id?: string
+          last_seen_at?: string | null
+          plant_id?: string | null
+          user_id?: string
+          wet_raw?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_plant_id_fkey"
+            columns: ["plant_id"]
+            isOneToOne: false
+            referencedRelation: "plants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plants: {
         Row: {
           created_at: string

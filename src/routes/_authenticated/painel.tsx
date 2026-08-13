@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Leaf, Plus, AlertTriangle, LogOut, RefreshCw, Trash2 } from "lucide-react";
+import { Leaf, Plus, AlertTriangle, LogOut, RefreshCw, Trash2, Cpu } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -109,11 +109,17 @@ function Painel() {
           Smart Garden
         </span>
         <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/dispositivos">
+              <Cpu className="mr-1 h-4 w-4" /> Dispositivos
+            </Link>
+          </Button>
           <NovaPlanta onDone={refresh} />
           <Button variant="ghost" size="icon" onClick={sair} aria-label="Sair">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
+
       </header>
 
       {alerts.data && alerts.data.length > 0 && (
