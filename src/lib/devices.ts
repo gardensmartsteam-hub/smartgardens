@@ -4,25 +4,41 @@ export type Device = {
   id: string;
   device_id: string;
   device_key: string;
+  name: string;
+  status: string;
+  require_key: boolean;
   plant_id: string | null;
   dry_raw: number;
   wet_raw: number;
   battery: number | null;
   last_seen_at: string | null;
   created_at: string;
+  updated_at: string;
 };
+
+/** Um dispositivo é considerado online se enviou algo na última meia hora. */
+export function deviceOnline(device: Pick<Device, "last_seen_at">) {
+  if (!device.last_seen_at) return false;
+  return Date.now() - new Date(device.last_seen_at).getTime() < 30 * 60_000;
+}
+
+export function deviceStatusLabel(device: Pick<Device, "last_seen_at">) {
+  if (!device.last_seen_at) return "Aguardando primeira leitura";
+  return deviceOnline(device) ? "Online" : "Sem sinal recente";
+}
 
 export async function fetchDevices(): Promise<Device[]> {
   const { data, error } = await supabase
     .from("devices")
     .select("*")
-    .order("device_id", { ascending: true });
+    .order("created_at", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Device[];
 }
 
 export async function createDevice(input: {
   deviceId: string;
+  name: string;
   plantId: string | null;
   dryRaw: number;
   wetRaw: number;
@@ -32,32 +48,44 @@ export async function createDevice(input: {
   const { error } = await supabase.from("devices").insert({
     user_id: userData.user.id,
     device_id: input.deviceId.trim(),
+    name: input.name.trim() || "Sensor do Jardim",
     plant_id: input.plantId,
     dry_raw: input.dryRaw,
     wet_raw: input.wetRaw,
   });
   if (error) {
-    if (error.code === "23505") throw new Error("Já existe um dispositivo com esse ID.");
-    throw error;
+    if (error.code === "23505") throw new Error("Já existe um dispositivo com esse identificador.");
+    throw new Error("Não consegui cadastrar o dispositivo agora.");
   }
 }
 
 export async function updateDevice(id: string, patch: Partial<Device>) {
   const { error } = await supabase.from("devices").update(patch).eq("id", id);
-  if (error) throw error;
+  if (error) throw new Error("Não consegui atualizar o dispositivo.");
 }
 
 export async function removeDevice(id: string) {
   const { error } = await supabase.from("devices").delete().eq("id", id);
-  if (error) throw error;
+  if (error) throw new Error("Não consegui remover o dispositivo.");
 }
 
-export function firmwareCode(device: {
-  device_id: string;
-  device_key: string;
-  dry_raw: number;
-  wet_raw: number;
-}, apiBaseUrl: string) {
+export function firmwareCode(
+  device: {
+    device_id: string;
+    device_key: string;
+    require_key: boolean;
+    dry_raw: number;
+    wet_raw: number;
+  },
+  apiBaseUrl: string,
+) {
+  const keyLines = device.require_key
+    ? `\n// Chave exclusiva deste dispositivo (não é credencial administrativa)\nconst char* DEVICE_KEY = "${device.device_key}";\n`
+    : "";
+  const keyHeader = device.require_key
+    ? `  http.addHeader("x-device-key", DEVICE_KEY);\n`
+    : "";
+
   return `#include <WiFi.h>
 #include <HTTPClient.h>
 
@@ -65,18 +93,16 @@ export function firmwareCode(device: {
 const char* WIFI_SSID     = "Malaphaia";
 const char* WIFI_PASSWORD = "Malaphaia123";
 
-// ---------- Backend (nunca use localhost ou 127.0.0.1) ----------
-const char* API_BASE_URL = "${apiBaseUrl}";
-const char* API_PATH     = "/api/public/ingest";
+// ---------- Backend (HTTPS público, nunca localhost ou 127.0.0.1) ----------
+const char* API_URL = "${apiBaseUrl}/api/public/device/reading";
 
 // ---------- Identificação do dispositivo ----------
-const char* DEVICE_ID  = "${device.device_id}";
-const char* DEVICE_KEY = "${device.device_key}";
-
+const char* DEVICE_ID = "${device.device_id}";
+${keyLines}
 // ---------- Sensor de umidade do solo ----------
 const int SOIL_SENSOR_PIN = 34;   // GPIO analógico
-const int SENSOR_SECO     = ${device.dry_raw};  // leitura com o sensor no ar/terra seca -> 0%
-const int SENSOR_MOLHADO  = ${device.wet_raw};  // leitura em terra bem molhada -> 100%
+const int SENSOR_SECO     = ${device.dry_raw};  // leitura no ar/terra seca -> 0%
+const int SENSOR_MOLHADO  = ${device.wet_raw};  // leitura em terra molhada -> 100%
 
 const unsigned long INTERVALO_MS = 60UL * 1000UL;
 
@@ -96,20 +122,18 @@ void conectarWiFi() {
   Serial.println(" conectado! IP: " + WiFi.localIP().toString());
 }
 
-void enviarLeitura(int soilMoisture) {
+void enviarLeitura(int humidity) {
   if (WiFi.status() != WL_CONNECTED) conectarWiFi();
 
   HTTPClient http;
-  http.begin(String(API_BASE_URL) + API_PATH);
+  http.begin(API_URL);
   http.addHeader("Content-Type", "application/json");
-  http.addHeader("x-device-key", DEVICE_KEY);
-
-  // Contrato V1: só enviamos o que o sensor realmente mede.
+${keyHeader}
   String payload = String("{\\"deviceId\\":\\"") + DEVICE_ID +
-                   "\\",\\"soilMoisture\\":" + String(soilMoisture) + "}";
+                   "\\",\\"humidity\\":" + String(humidity) + "}";
 
   int status = http.POST(payload);
-  Serial.printf("POST %s -> %d\\n", API_PATH, status);
+  Serial.printf("POST -> %d\\n", status);
   Serial.println(http.getString());
   http.end();
 }

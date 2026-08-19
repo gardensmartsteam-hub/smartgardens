@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDispositivosRouteImport } from './routes/_authenticated/dispositivos'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedPlantasPlantIdRouteImport } from './routes/_authenticated/plantas.$plantId'
+import { Route as ApiDeviceReadingRouteImport } from './routes/api/device/reading'
 import { Route as ApiPublicIngestRouteImport } from './routes/api/public/ingest'
 import { Route as ApiPublicDeviceReadingRouteImport } from './routes/api/public/device/reading'
 
@@ -49,6 +50,11 @@ const AuthenticatedPlantasPlantIdRoute =
     path: '/plantas/$plantId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiDeviceReadingRoute = ApiDeviceReadingRouteImport.update({
+  id: '/api/device/reading',
+  path: '/api/device/reading',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicIngestRoute = ApiPublicIngestRouteImport.update({
   id: '/api/public/ingest',
   path: '/api/public/ingest',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/dispositivos': typeof AuthenticatedDispositivosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/plantas/$plantId': typeof AuthenticatedPlantasPlantIdRoute
+  '/api/device/reading': typeof ApiDeviceReadingRoute
   '/api/public/ingest': typeof ApiPublicIngestRoute
   '/api/public/device/reading': typeof ApiPublicDeviceReadingRoute
 }
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/dispositivos': typeof AuthenticatedDispositivosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/plantas/$plantId': typeof AuthenticatedPlantasPlantIdRoute
+  '/api/device/reading': typeof ApiDeviceReadingRoute
   '/api/public/ingest': typeof ApiPublicIngestRoute
   '/api/public/device/reading': typeof ApiPublicDeviceReadingRoute
 }
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated/dispositivos': typeof AuthenticatedDispositivosRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/plantas/$plantId': typeof AuthenticatedPlantasPlantIdRoute
+  '/api/device/reading': typeof ApiDeviceReadingRoute
   '/api/public/ingest': typeof ApiPublicIngestRoute
   '/api/public/device/reading': typeof ApiPublicDeviceReadingRoute
 }
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/dispositivos'
     | '/painel'
     | '/plantas/$plantId'
+    | '/api/device/reading'
     | '/api/public/ingest'
     | '/api/public/device/reading'
   fileRoutesByTo: FileRoutesByTo
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/dispositivos'
     | '/painel'
     | '/plantas/$plantId'
+    | '/api/device/reading'
     | '/api/public/ingest'
     | '/api/public/device/reading'
   id:
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dispositivos'
     | '/_authenticated/painel'
     | '/_authenticated/plantas/$plantId'
+    | '/api/device/reading'
     | '/api/public/ingest'
     | '/api/public/device/reading'
   fileRoutesById: FileRoutesById
@@ -124,6 +136,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiDeviceReadingRoute: typeof ApiDeviceReadingRoute
   ApiPublicIngestRoute: typeof ApiPublicIngestRoute
   ApiPublicDeviceReadingRoute: typeof ApiPublicDeviceReadingRoute
 }
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlantasPlantIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/device/reading': {
+      id: '/api/device/reading'
+      path: '/api/device/reading'
+      fullPath: '/api/device/reading'
+      preLoaderRoute: typeof ApiDeviceReadingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/ingest': {
       id: '/api/public/ingest'
       path: '/api/public/ingest'
@@ -208,6 +228,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiDeviceReadingRoute: ApiDeviceReadingRoute,
   ApiPublicIngestRoute: ApiPublicIngestRoute,
   ApiPublicDeviceReadingRoute: ApiPublicDeviceReadingRoute,
 }
