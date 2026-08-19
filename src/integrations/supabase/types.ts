@@ -64,7 +64,11 @@ export type Database = {
           dry_raw: number
           id: string
           last_seen_at: string | null
+          name: string
           plant_id: string | null
+          require_key: boolean
+          status: string
+          updated_at: string
           user_id: string
           wet_raw: number
         }
@@ -76,7 +80,11 @@ export type Database = {
           dry_raw?: number
           id?: string
           last_seen_at?: string | null
+          name?: string
           plant_id?: string | null
+          require_key?: boolean
+          status?: string
+          updated_at?: string
           user_id: string
           wet_raw?: number
         }
@@ -88,7 +96,11 @@ export type Database = {
           dry_raw?: number
           id?: string
           last_seen_at?: string | null
+          name?: string
           plant_id?: string | null
+          require_key?: boolean
+          status?: string
+          updated_at?: string
           user_id?: string
           wet_raw?: number
         }
@@ -157,36 +169,49 @@ export type Database = {
       }
       readings: {
         Row: {
+          battery: number | null
+          device_id: string | null
           humidity: number
           id: string
-          light: number
-          nutrients: number
+          light: number | null
+          nutrients: number | null
           plant_id: string
           recorded_at: string
-          temperature: number
+          temperature: number | null
           user_id: string
         }
         Insert: {
+          battery?: number | null
+          device_id?: string | null
           humidity: number
           id?: string
-          light: number
-          nutrients: number
+          light?: number | null
+          nutrients?: number | null
           plant_id: string
           recorded_at?: string
-          temperature: number
+          temperature?: number | null
           user_id: string
         }
         Update: {
+          battery?: number | null
+          device_id?: string | null
           humidity?: number
           id?: string
-          light?: number
-          nutrients?: number
+          light?: number | null
+          nutrients?: number | null
           plant_id?: string
           recorded_at?: string
-          temperature?: number
+          temperature?: number | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "readings_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "readings_plant_id_fkey"
             columns: ["plant_id"]
@@ -238,6 +263,33 @@ export type Database = {
           scientific_name?: string
           temp_max?: number
           temp_min?: number
+        }
+        Relationships: []
+      }
+      user_consents: {
+        Row: {
+          accepted_at: string
+          cookie_consent: boolean
+          privacy_version: string
+          terms_version: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          cookie_consent?: boolean
+          privacy_version: string
+          terms_version: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          cookie_consent?: boolean
+          privacy_version?: string
+          terms_version?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
