@@ -16,6 +16,7 @@ import { Route as AuthenticatedDispositivosRouteImport } from './routes/_authent
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedPlantasPlantIdRouteImport } from './routes/_authenticated/plantas.$plantId'
 import { Route as ApiPublicIngestRouteImport } from './routes/api/public/ingest'
+import { Route as ApiPublicDeviceReadingRouteImport } from './routes/api/public/device/reading'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -53,6 +54,11 @@ const ApiPublicIngestRoute = ApiPublicIngestRouteImport.update({
   path: '/api/public/ingest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDeviceReadingRoute = ApiPublicDeviceReadingRouteImport.update({
+  id: '/api/public/device/reading',
+  path: '/api/public/device/reading',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRoute
   '/plantas/$plantId': typeof AuthenticatedPlantasPlantIdRoute
   '/api/public/ingest': typeof ApiPublicIngestRoute
+  '/api/public/device/reading': typeof ApiPublicDeviceReadingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/painel': typeof AuthenticatedPainelRoute
   '/plantas/$plantId': typeof AuthenticatedPlantasPlantIdRoute
   '/api/public/ingest': typeof ApiPublicIngestRoute
+  '/api/public/device/reading': typeof ApiPublicDeviceReadingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/plantas/$plantId': typeof AuthenticatedPlantasPlantIdRoute
   '/api/public/ingest': typeof ApiPublicIngestRoute
+  '/api/public/device/reading': typeof ApiPublicDeviceReadingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/plantas/$plantId'
     | '/api/public/ingest'
+    | '/api/public/device/reading'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/plantas/$plantId'
     | '/api/public/ingest'
+    | '/api/public/device/reading'
   id:
     | '__root__'
     | '/'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/_authenticated/plantas/$plantId'
     | '/api/public/ingest'
+    | '/api/public/device/reading'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -113,6 +125,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicIngestRoute: typeof ApiPublicIngestRoute
+  ApiPublicDeviceReadingRoute: typeof ApiPublicDeviceReadingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -166,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicIngestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/device/reading': {
+      id: '/api/public/device/reading'
+      path: '/api/public/device/reading'
+      fullPath: '/api/public/device/reading'
+      preLoaderRoute: typeof ApiPublicDeviceReadingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -189,6 +209,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicIngestRoute: ApiPublicIngestRoute,
+  ApiPublicDeviceReadingRoute: ApiPublicDeviceReadingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
